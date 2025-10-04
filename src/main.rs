@@ -1,6 +1,7 @@
-mod vec3;
 mod color;
+mod hit;
 mod ray;
+mod vec3;
 
 use std::io;
 
