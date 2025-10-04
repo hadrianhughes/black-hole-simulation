@@ -22,7 +22,7 @@ impl Ray {
         self.direction
     }
 
-    pub fn at(&self, t: f64) -> f64 {
+    pub fn at(&self, t: f64) -> Point3 {
         self.origin + self.direction * t
     }
 }
