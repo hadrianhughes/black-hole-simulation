@@ -8,7 +8,29 @@ use color::Color;
 use vec3::{Point3, Vec3};
 use ray::Ray;
 
+fn hit_sphere_at(center: Point3, radius: f64, r: &Ray) -> f64 {
+    let origin_to_center = r.origin() - center;
+
+    let a = vec3::dot(r.direction(), r.direction());
+    let half_b = vec3::dot(r.direction(), origin_to_center);
+    let c = vec3::dot(origin_to_center, origin_to_center) - radius * radius;
+
+    let discriminant = half_b * half_b - a * c;
+
+    if discriminant < 0.0 {
+        -1.0
+    } else {
+        (-half_b - f64::sqrt(discriminant)) / a
+    }
+}
+
 fn ray_color(r: &Ray) -> Color {
+    let t = hit_sphere_at(Point3::new(0.0, 0.0, -1.0), 0.5, r);
+    if t > 0.0 {
+        let normal = vec3::unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+        return 0.5 * Color::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0);
+    }
+
     let unit_direction = vec3::unit_vector(r.direction());
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
