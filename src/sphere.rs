@@ -31,20 +31,33 @@ impl Hittable for Sphere {
             return None;
         }
 
-        let in_range = |n: f64| -> bool { n > t_min && n < t_max };
-
         // Choose the nearest root
-        let sqrt_d = f64::sqrt(discriminant);
-        let neg_root = (-half_b - sqrt_d) / a;
-        if in_range(neg_root) {
-            return Some(neg_root);
-        }
+        let root: Option<f64> = {
+            let in_range = |n: f64| -> bool { n > t_min && n < t_max };
 
-        let pos_root = (-half_b + sqrt_d) / a;
-        if in_range(pos_root) {
-            return Some(pos_root);
-        }
+            let sqrt_d = f64::sqrt(discriminant);
+            let neg_root = (-half_b - sqrt_d) / a;
+            if in_range(neg_root) {
+                Some(neg_root)
+            } else {
+                let pos_root = (-half_b + sqrt_d) / a;
+                if in_range(pos_root) {
+                    Some(pos_root)
+                } else {
+                    None
+                }
+            }
+        };
 
-        None
+        match root {
+            Some(t) => {
+                let mut hit = Hit::new(t, ray.at(t));
+                let outward_normal = (hit.position - self.center) / self.radius;
+                hit.set_face_normal(ray, outward_normal);
+
+                Some(hit)
+            },
+            None => { None }
+        }
     }
 }

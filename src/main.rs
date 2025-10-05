@@ -16,8 +16,8 @@ fn ray_color(r: &Ray) -> Color {
     let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
     let hit = sphere.hit_scan(r, 0.0, std::f64::INFINITY);
 
-    if let Some(t) = hit && t > 0.0 {
-        let normal = vec3::unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+    if let Some(h) = hit && h.t > 0.0 {
+        let normal = vec3::unit_vector(r.at(h.t) - Vec3::new(0.0, 0.0, -1.0));
         return 0.5 * Color::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0);
     }
 
