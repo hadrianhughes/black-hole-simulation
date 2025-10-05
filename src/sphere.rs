@@ -51,7 +51,10 @@ impl Hittable for Sphere {
 
         match root {
             Some(t) => {
-                let mut hit = Hit::new(t, ray.at(t));
+                let mut hit = Hit::new();
+                hit.t = t;
+                hit.position = ray.at(t);
+
                 let outward_normal = (hit.position - self.center) / self.radius;
                 hit.set_face_normal(ray, outward_normal);
 
