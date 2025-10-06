@@ -49,6 +49,10 @@ impl Vec3 {
     pub fn length_squared(&self) -> f64 {
         self.0 * self.0 + self.1 * self.1 + self.2 * self.2
     }
+
+    pub fn unit(self) -> Self {
+        self / self.length()
+    }
 }
 
 pub type Point3 = Vec3;
@@ -169,8 +173,4 @@ pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
         u.z() * v.x() - u.x() * v.z(),
         u.x() * v.y() - u.y() * v.x()
     )
-}
-
-pub fn unit_vector(v: Vec3) -> Vec3 {
-    v / v.length()
 }

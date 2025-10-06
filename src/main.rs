@@ -26,7 +26,7 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
         return 0.5 * ray_color(&Ray::new(h.position, direction), world, depth - 1);
     }
 
-    let unit_direction = vec3::unit_vector(ray.direction());
+    let unit_direction = ray.direction().unit();
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
 }
