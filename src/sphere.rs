@@ -1,3 +1,4 @@
+use crate::common::in_range;
 use crate::hit::{Hit, Hittable};
 use crate::vec3;
 use crate::ray::Ray;
@@ -33,15 +34,13 @@ impl Hittable for Sphere {
 
         // Choose the nearest root
         let root: Option<f64> = {
-            let in_range = |n: f64| -> bool { n > t_min && n < t_max };
-
             let sqrt_d = f64::sqrt(discriminant);
             let neg_root = (-half_b - sqrt_d) / a;
-            if in_range(neg_root) {
+            if in_range(t_min, neg_root, t_max) {
                 Some(neg_root)
             } else {
                 let pos_root = (-half_b + sqrt_d) / a;
-                if in_range(pos_root) {
+                if in_range(t_min, pos_root, t_max) {
                     Some(pos_root)
                 } else {
                     None

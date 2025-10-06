@@ -1,4 +1,5 @@
 mod color;
+mod common;
 mod hit;
 mod ray;
 mod sphere;
