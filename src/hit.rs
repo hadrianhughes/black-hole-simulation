@@ -35,8 +35,9 @@ impl HittableList {
         Default::default()
     }
 
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(mut self, object: Box<dyn Hittable>) -> Self {
         self.objects.push(object);
+        self
     }
 }
 
