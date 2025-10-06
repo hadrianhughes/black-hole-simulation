@@ -166,11 +166,3 @@ impl Div<f64> for Vec3 {
 pub fn dot(u: Vec3, v: Vec3) -> f64 {
     u.x() * v.x() + u.y() * v.y() + u.z() * v.z()
 }
-
-pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
-    Vec3::new(
-        u.y() * v.z() - u.z() * v.y(),
-        u.z() * v.x() - u.x() * v.z(),
-        u.x() * v.y() - u.y() * v.x()
-    )
-}
