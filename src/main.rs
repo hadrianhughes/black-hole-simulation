@@ -8,21 +8,17 @@ mod vec3;
 use std::io;
 
 use color::Color;
-use hit::Hittable;
+use hit::{Hittable, HittableList};
 use ray::Ray;
 use sphere::Sphere;
 use vec3::{Point3, Vec3};
 
-fn ray_color(r: &Ray) -> Color {
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
-    let hit = sphere.hit_scan(r, 0.0, std::f64::INFINITY);
-
-    if let Some(h) = hit && h.t > 0.0 {
-        let normal = vec3::unit_vector(r.at(h.t) - Vec3::new(0.0, 0.0, -1.0));
-        return 0.5 * Color::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0);
+fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color {
+    if let Some(h) = world.hit_scan(ray, 0.0, std::f64::INFINITY) {
+        return 0.5 * (h.normal + Color::new(1.0, 1.0, 1.0));
     }
 
-    let unit_direction = vec3::unit_vector(r.direction());
+    let unit_direction = vec3::unit_vector(ray.direction());
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
 }
@@ -32,6 +28,12 @@ fn main() {
     const IMAGE_WIDTH: i32 = 400;
     const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
 
+    // World
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+
+    // Camera
     let viewport_height = 2.0;
     let viewport_width = viewport_height * ASPECT_RATIO;
     let focal_length = 1.0;
@@ -42,6 +44,7 @@ fn main() {
 
     let bottom_left = origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
 
+    // Render
     print!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
 
     for j in (0..IMAGE_HEIGHT).rev() {
@@ -52,7 +55,7 @@ fn main() {
             let v = j as f64 / (IMAGE_HEIGHT - 1) as f64;
             let r = Ray::new(origin, bottom_left + u * horizontal + v * vertical - origin);
 
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
             color::write_color(&mut io::stdout(), pixel_color);
         }
     }
