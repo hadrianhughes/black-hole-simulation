@@ -19,16 +19,6 @@ impl Vec3 {
         )
     }
 
-    pub fn random_in_unit_sphere() -> Self {
-        loop {
-            let v = Vec3::random_in_range(-1.0, 1.0);
-            if v.length_squared() >= 1.0 {
-                continue;
-            }
-
-            return v;
-        }
-    }
 
     pub fn x(&self) -> f64 {
         self.0
@@ -165,4 +155,19 @@ impl Div<f64> for Vec3 {
 
 pub fn dot(u: Vec3, v: Vec3) -> f64 {
     u.x() * v.x() + u.y() * v.y() + u.z() * v.z()
+}
+
+pub fn random_in_unit_sphere() -> Vec3 {
+    loop {
+        let v = Vec3::random_in_range(-1.0, 1.0);
+        if v.length_squared() >= 1.0 {
+            continue;
+        }
+
+        return v;
+    }
+}
+
+pub fn random_unit_vector() -> Vec3 {
+    random_in_unit_sphere().unit()
 }

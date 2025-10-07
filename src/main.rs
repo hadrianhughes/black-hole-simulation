@@ -14,7 +14,7 @@ use color::Color;
 use hit::{Hittable, HittableList};
 use ray::Ray;
 use sphere::Sphere;
-use vec3::{Point3, Vec3};
+use vec3::Point3;
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if depth <= 0 {
@@ -22,7 +22,7 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     }
 
     if let Some(h) = world.hit_scan(ray, 0.001, std::f64::INFINITY) {
-        let direction = h.normal + Vec3::random_in_unit_sphere();
+        let direction = h.normal + vec3::random_unit_vector();
         return 0.5 * ray_color(&Ray::new(h.position, direction), world, depth - 1);
     }
 
