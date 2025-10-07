@@ -166,6 +166,17 @@ pub fn dot(u: Vec3, v: Vec3) -> f64 {
     u.x() * v.x() + u.y() * v.y() + u.z() * v.z()
 }
 
+pub fn reflect(v: Vec3, normal: Vec3) -> Vec3 {
+    v - 2.0 * dot(v, normal) * normal
+}
+
+pub fn refract(v: Vec3, normal: Vec3, refractive_ratio: f64) -> Vec3 {
+    let cos_theta = f64::min(dot(-v, normal), 1.0);
+    let perp = refractive_ratio * (v + cos_theta * normal);
+    let parallel = -f64::sqrt(f64::abs(1.0 - perp.length_squared())) * normal;
+    perp + parallel
+}
+
 pub fn random_in_unit_sphere() -> Vec3 {
     loop {
         let v = Vec3::random_in_range(-1.0, 1.0);
