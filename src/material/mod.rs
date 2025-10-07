@@ -1,3 +1,4 @@
+pub mod dielectric;
 pub mod lambertian;
 pub mod metal;
 
@@ -5,6 +6,7 @@ use crate::color::Color;
 use crate::hit::Hit;
 use crate::ray::Ray;
 
+pub use dielectric::Dielectric;
 pub use lambertian::Lambertian;
 pub use metal::Metal;
 

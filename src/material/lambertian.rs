@@ -4,6 +4,7 @@ use crate::material::{Material, ScatterResult};
 use crate::ray::Ray;
 use crate::vec3;
 
+#[derive(Clone)]
 pub struct Lambertian {
     albedo: Color,
 }
