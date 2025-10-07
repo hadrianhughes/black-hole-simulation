@@ -1,3 +1,6 @@
+use std::rc::Rc;
+
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3;
 use crate::vec3::{Point3, Vec3};
@@ -8,6 +11,7 @@ pub struct Hit {
     pub position: Point3,
     pub front_face: bool,
     pub normal: Vec3,
+    pub material: Option<Rc<dyn Material>>,
 }
 
 impl Hit {

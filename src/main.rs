@@ -2,16 +2,19 @@ mod camera;
 mod color;
 mod common;
 mod hit;
+mod material;
 mod ray;
 mod sphere;
 mod vec3;
 
 use std::io;
+use std::rc::Rc;
 use rand::Rng;
 
 use camera::Camera;
 use color::Color;
 use hit::{Hittable, HittableList};
+use material::Lambertian;
 use ray::Ray;
 use sphere::Sphere;
 use vec3::Point3;
@@ -38,9 +41,12 @@ fn main() {
     const SAMPLES_PER_PIXEL: i32 = 50;
     const MAX_DEPTH: i32 = 50;
 
+    let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
+    let material_ball = Lambertian::new(Color::new(0.7, 0.7, 0.3));
+
     let world = HittableList::new()
-        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)))
-        .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_ground))))
+        .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, Rc::new(material_ball))));
 
     let camera = Camera::new(ASPECT_RATIO);
 
