@@ -16,10 +16,7 @@ impl Metal {
 
 impl Material for Metal {
     fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<ScatterResult> {
-        let reflected = ray
-            .direction()
-            .unit()
-            .reflect(hit.normal);
+        let reflected = vec3::reflect(ray.direction().unit(), hit.normal);
 
         let scattered_ray = Ray::new(hit.position, reflected);
 
