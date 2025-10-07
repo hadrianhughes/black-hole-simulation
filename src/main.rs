@@ -24,9 +24,17 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    if let Some(h) = world.hit_scan(ray, 0.001, std::f64::INFINITY) {
-        let direction = h.normal + vec3::random_unit_vector();
-        return 0.5 * ray_color(&Ray::new(h.position, direction), world, depth - 1);
+    if let Some(hit) = world.hit_scan(ray, 0.001, std::f64::INFINITY) {
+        if let Some(scatter) = hit
+            .material
+            .as_ref()
+            .unwrap()
+            .scatter(ray, &hit)
+        {
+            return scatter.attenuation * ray_color(&scatter.ray, world, depth - 1);
+        }
+
+        return Color::new(0.0, 0.0, 0.0);
     }
 
     let unit_direction = ray.direction().unit();
@@ -42,7 +50,7 @@ fn main() {
     const MAX_DEPTH: i32 = 50;
 
     let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
-    let material_ball = Lambertian::new(Color::new(0.7, 0.7, 0.3));
+    let material_ball = Lambertian::new(Color::new(0.7, 0.3, 0.3));
 
     let world = HittableList::new()
         .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_ground))))

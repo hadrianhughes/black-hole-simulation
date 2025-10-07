@@ -44,6 +44,10 @@ impl Vec3 {
         self / self.length()
     }
 
+    pub fn reflect(self, about: Vec3) -> Self {
+        self - 2.0 * dot(self, about) * about
+    }
+
     pub fn is_near_zero(&self) -> bool {
         const EPS: f64 = 1.0e-8;
         self.0.abs() < EPS && self.1.abs() < EPS && self.2.abs() < EPS
