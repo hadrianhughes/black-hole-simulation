@@ -12,9 +12,10 @@ pub fn write_color(
 ) {
     let scale = 1.0 / samples_per_pixel as f64;
 
-    let r = pixel_color.x() * scale;
-    let g = pixel_color.y() * scale;
-    let b = pixel_color.z() * scale;
+    // sqrt for gamma correction
+    let r = f64::sqrt(pixel_color.x() * scale);
+    let g = f64::sqrt(pixel_color.y() * scale);
+    let b = f64::sqrt(pixel_color.z() * scale);
 
     writeln!(
         out,
