@@ -21,7 +21,7 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    if let Some(h) = world.hit_scan(ray, 0.0, std::f64::INFINITY) {
+    if let Some(h) = world.hit_scan(ray, 0.001, std::f64::INFINITY) {
         let direction = h.normal + Vec3::random_in_unit_sphere();
         return 0.5 * ray_color(&Ray::new(h.position, direction), world, depth - 1);
     }
