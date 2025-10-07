@@ -14,7 +14,7 @@ use rand::Rng;
 use camera::Camera;
 use color::Color;
 use hit::{Hittable, HittableList};
-use material::Lambertian;
+use material::{Lambertian, Metal};
 use ray::Ray;
 use sphere::Sphere;
 use vec3::Point3;
@@ -50,11 +50,15 @@ fn main() {
     const MAX_DEPTH: i32 = 50;
 
     let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
-    let material_ball = Lambertian::new(Color::new(0.7, 0.3, 0.3));
+    let material_left   = Metal::new(Color::new(0.8, 0.8, 0.8));
+    let material_center = Lambertian::new(Color::new(0.7, 0.3, 0.3));
+    let material_right  = Metal::new(Color::new(0.8, 0.6, 0.2));
 
     let world = HittableList::new()
-        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_ground))))
-        .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, Rc::new(material_ball))));
+        .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, Rc::new(material_ground))))
+        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_center))))
+        .add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Rc::new(material_left))))
+        .add(Box::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, Rc::new(material_right))));
 
     let camera = Camera::new(ASPECT_RATIO);
 
