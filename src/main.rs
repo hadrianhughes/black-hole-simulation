@@ -7,7 +7,6 @@ mod ray;
 mod sphere;
 mod vec3;
 
-use std::f64::consts::PI;
 use std::io;
 use std::rc::Rc;
 use rand::Rng;
@@ -15,10 +14,10 @@ use rand::Rng;
 use camera::Camera;
 use color::Color;
 use hit::{Hittable, HittableList};
-use material::{Dielectric, Lambertian};
+use material::{Dielectric, Lambertian, Metal};
 use ray::Ray;
 use sphere::Sphere;
-use vec3::Point3;
+use vec3::{Point3, Vec3};
 
 fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if depth <= 0 {
@@ -44,22 +43,32 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
 }
 
 fn main() {
-    const FOV: f64 = 90.0;
+    const FOV: f64 = 20.0;
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: i32 = 400;
     const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
     const SAMPLES_PER_PIXEL: i32 = 50;
     const MAX_DEPTH: i32 = 50;
 
+    let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
     let material_glass = Dielectric::new(1.5);
-    let material_lambertian = Lambertian::new(Color::new(0.1, 0.8, 0.8));
+    let material_lambertian = Lambertian::new(Color::new(0.1, 0.2, 0.5));
+    let material_metal = Metal::new(Color::new(0.5, 0.5, 0.5), 0.0);
 
-    let radius = f64::cos(PI / 4.0);
     let world = HittableList::new()
-        .add(Box::new(Sphere::new(Point3::new(-radius, 0.0, -1.0), radius, Rc::new(material_glass))))
-        .add(Box::new(Sphere::new(Point3::new(radius, 0.0, -1.0), radius, Rc::new(material_lambertian))));
+        .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, Rc::new(material_ground))))
+        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_lambertian))))
+        .add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Rc::new(material_glass.clone()))))
+        .add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.45, Rc::new(material_glass))))
+        .add(Box::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, Rc::new(material_metal))));
 
-    let camera = Camera::new(FOV, ASPECT_RATIO);
+    let camera = Camera::new(
+        Point3::new(-2.0, 2.0, 1.0),
+        Point3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        FOV,
+        ASPECT_RATIO,
+    );
 
     print!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
 
