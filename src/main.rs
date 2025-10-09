@@ -14,7 +14,7 @@ use rand::Rng;
 use camera::Camera;
 use color::Color;
 use hit::{Hittable, HittableList};
-use material::{Dielectric, Lambertian, Metal};
+use material::{Dielectric, DiffuseLight, Lambertian, Metal};
 use ray::Ray;
 use sphere::Sphere;
 use vec3::{Point3, Vec3};
@@ -25,16 +25,14 @@ fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     }
 
     if let Some(hit) = world.hit_scan(ray, 0.001, std::f64::INFINITY) {
-        if let Some(scatter) = hit
-            .material
-            .as_ref()
-            .unwrap()
-            .scatter(ray, &hit)
-        {
-            return scatter.attenuation * ray_color(&scatter.ray, world, depth - 1);
-        }
+        let mat = hit.material.as_ref().unwrap();
+        let emission = mat.emit(ray, &hit);
 
-        return Color::new(0.0, 0.0, 0.0);
+        if let Some(scatter) = mat.scatter(ray, &hit) {
+            return emission + scatter.attenuation * ray_color(&scatter.ray, world, depth - 1);
+        } else {
+            return emission;
+        }
     }
 
     let unit_direction = ray.direction().unit();
@@ -52,12 +50,12 @@ fn main() {
 
     let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
     let material_glass = Dielectric::new(1.5);
-    let material_lambertian = Lambertian::new(Color::new(0.1, 0.2, 0.5));
+    let material_diffuse = DiffuseLight::new(Color::new(0.9, 0.9, 0.1), 1.5);
     let material_metal = Metal::new(Color::new(0.5, 0.5, 0.5), 0.0);
 
     let world = HittableList::new()
         .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, Rc::new(material_ground))))
-        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_lambertian))))
+        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_diffuse))))
         .add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Rc::new(material_glass.clone()))))
         .add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.45, Rc::new(material_glass))))
         .add(Box::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, Rc::new(material_metal))));

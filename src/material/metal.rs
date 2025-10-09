@@ -35,4 +35,8 @@ impl Material for Metal {
             None
         }
     }
+
+    fn emit(&self, _r: &Ray, _h: &Hit) -> Color {
+        Color::default()
+    }
 }

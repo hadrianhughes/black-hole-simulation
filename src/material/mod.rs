@@ -1,4 +1,5 @@
 pub mod dielectric;
+pub mod diffuse_light;
 pub mod lambertian;
 pub mod metal;
 
@@ -7,6 +8,7 @@ use crate::hit::Hit;
 use crate::ray::Ray;
 
 pub use dielectric::Dielectric;
+pub use diffuse_light::DiffuseLight;
 pub use lambertian::Lambertian;
 pub use metal::Metal;
 
@@ -17,4 +19,5 @@ pub struct ScatterResult {
 
 pub trait Material {
     fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<ScatterResult>;
+    fn emit(&self, ray: &Ray, hit: &Hit) -> Color;
 }

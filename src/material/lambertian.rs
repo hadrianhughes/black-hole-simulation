@@ -28,4 +28,8 @@ impl Material for Lambertian {
             attenuation: self.albedo,
         })
     }
+
+    fn emit(&self, _r: &Ray, _h: &Hit) -> Color {
+        Color::default()
+    }
 }

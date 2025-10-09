@@ -52,4 +52,8 @@ impl Material for Dielectric {
             attenuation: Color::new(1.0, 1.0, 1.0),
         })
     }
+
+    fn emit(&self, _r: &Ray, _h: &Hit) -> Color {
+        Color::default()
+    }
 }
