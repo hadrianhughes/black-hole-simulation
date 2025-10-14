@@ -4,6 +4,7 @@ mod common;
 mod hit;
 mod material;
 mod ray;
+mod raytracer;
 mod sphere;
 mod vec3;
 
