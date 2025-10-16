@@ -1,8 +1,12 @@
+use bytemuck::{Pod, Zeroable};
+
 use crate::common;
 use crate::Ray;
 use crate::vec3;
 use crate::vec3::{Point3, Vec3};
 
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Camera {
     origin: Point3,
     bottom_left: Point3,

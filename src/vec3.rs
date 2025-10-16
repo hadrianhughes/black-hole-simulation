@@ -1,9 +1,12 @@
+use bytemuck::{Pod, Zeroable};
+
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::common;
 
-#[derive(Copy, Clone, Default)]
+#[repr(C)]
+#[derive(Copy, Clone, Default, Pod, Zeroable)]
 pub struct Vec3(f64, f64, f64);
 
 impl Vec3 {

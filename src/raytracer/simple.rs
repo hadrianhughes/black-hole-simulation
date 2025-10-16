@@ -1,9 +1,10 @@
+use bytemuck;
+use wgpu;
+use winit::window::Window;
+
 use crate::camera::Camera;
 use crate::raytracer::RayTracer;
 use crate::sphere::Sphere;
-
-use wgpu;
-use winit::window::Window;
 
 pub struct SimpleRayTracer<'window> {
     image_width: u32,
@@ -15,6 +16,7 @@ pub struct SimpleRayTracer<'window> {
     device: wgpu::Device,
     queue: wgpu::Queue,
     pipeline: wgpu::ComputePipeline,
+    bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl<'window> SimpleRayTracer<'window> {
@@ -67,13 +69,6 @@ impl<'window> SimpleRayTracer<'window> {
             cache: None,
         });
 
-        let camera_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Camera buffer"),
-            size: std::mem::size_of::<Camera>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
         SimpleRayTracer {
             image_width,
             image_height,
@@ -83,6 +78,7 @@ impl<'window> SimpleRayTracer<'window> {
             device,
             queue,
             pipeline,
+            bind_group_layout,
         }
     }
 }
@@ -92,7 +88,34 @@ impl<'window> RayTracer for SimpleRayTracer<'window> {
         self.camera
     }
 
-    fn render(&self) {
+    fn render(&self) -> Result<(), wgpu::SurfaceError> {
+        let output = self.surface.get_current_texture()?;
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let camera_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Camera buffer"),
+            size: std::mem::size_of::<Camera>() as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        self.queue.write_buffer(&camera_buffer, 0, bytemuck::cast_slice(&[self.camera]));
+
+        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &self.bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: camera_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::TextureView(&view),
+                },
+            ],
+            label: Some("RayTracer BindGroup"),
+        });
+
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("RayTracer encoder"),
         });
@@ -104,8 +127,7 @@ impl<'window> RayTracer for SimpleRayTracer<'window> {
             });
 
             pass.set_pipeline(&self.pipeline);
-            // TODO: set up the bind group
-            //pass.set_bind_group(0, &self.bind_group, &[]);
+            pass.set_bind_group(0, &bind_group, &[]);
             pass.dispatch_workgroups(
                 (self.image_width + 7) / 8,
                 (self.image_height + 7) / 8,
@@ -114,5 +136,7 @@ impl<'window> RayTracer for SimpleRayTracer<'window> {
         }
 
         self.queue.submit(Some(encoder.finish()));
+
+        Ok(())
     }
 }
