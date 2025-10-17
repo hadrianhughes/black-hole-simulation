@@ -84,10 +84,6 @@ impl<'window> SimpleRayTracer<'window> {
 }
 
 impl<'window> RayTracer for SimpleRayTracer<'window> {
-    fn get_camera(self) -> Camera {
-        self.camera
-    }
-
     fn render(&self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
