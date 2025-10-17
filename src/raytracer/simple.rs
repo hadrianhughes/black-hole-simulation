@@ -9,7 +9,7 @@ use crate::sphere::Sphere;
 pub struct SimpleRayTracer<'window> {
     image_width: u32,
     image_height: u32,
-    objects: Vec<Box<Sphere>>,
+    objects: Vec<Sphere>,
     camera: Camera,
 
     surface: wgpu::Surface<'window>,
@@ -24,7 +24,7 @@ impl<'window> SimpleRayTracer<'window> {
         image_width: u32,
         image_height: u32,
         window: &'window Window,
-        objects: Vec<Box<Sphere>>,
+        objects: Vec<Sphere>,
         camera: Camera,
     ) -> Self {
         let instance = wgpu::Instance::default();
@@ -98,8 +98,15 @@ impl<'window> RayTracer for SimpleRayTracer<'window> {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-
         self.queue.write_buffer(&camera_buffer, 0, bytemuck::cast_slice(&[self.camera]));
+
+        let objects_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Objects buffer"),
+            size: (std::mem::size_of::<Sphere>() * self.objects.len()) as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        self.queue.write_buffer(&objects_buffer, 1, bytemuck::cast_slice(self.objects.as_slice()));
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.bind_group_layout,
@@ -110,6 +117,10 @@ impl<'window> RayTracer for SimpleRayTracer<'window> {
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
+                    resource: objects_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
                     resource: wgpu::BindingResource::TextureView(&view),
                 },
             ],

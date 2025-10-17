@@ -1,19 +1,20 @@
-use std::rc::Rc;
+use bytemuck::{Pod, Zeroable};
 
 use crate::common::in_range;
 use crate::hit::{Hit, Hittable};
-use crate::material::Material;
 use crate::vec3;
 use crate::ray::Ray;
 
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Sphere {
     center: vec3::Point3,
-    radius: f64,
-    material: Rc<dyn Material>,
+    radius: f32,
+    material: u32,
 }
 
 impl Sphere {
-    pub fn new(center: vec3::Point3, radius: f64, material: Rc<dyn Material>) -> Self {
+    pub fn new(center: vec3::Point3, radius: f32, material: u32) -> Self {
         Sphere {
             center,
             radius,
