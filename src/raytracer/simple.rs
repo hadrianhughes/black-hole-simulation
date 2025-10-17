@@ -6,11 +6,11 @@ use crate::camera::Camera;
 use crate::raytracer::RayTracer;
 use crate::sphere::Sphere;
 
-pub struct SimpleRayTracer<'window> {
+pub struct SimpleRayTracer<'window, 'camera> {
     image_width: u32,
     image_height: u32,
     objects: Vec<Sphere>,
-    camera: Camera,
+    camera: &'camera Camera,
 
     surface: wgpu::Surface<'window>,
     device: wgpu::Device,
@@ -19,13 +19,13 @@ pub struct SimpleRayTracer<'window> {
     bind_group_layout: wgpu::BindGroupLayout,
 }
 
-impl<'window> SimpleRayTracer<'window> {
+impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
     pub async fn new(
         image_width: u32,
         image_height: u32,
         window: &'window Window,
         objects: Vec<Sphere>,
-        camera: Camera,
+        camera: &'camera Camera,
     ) -> Self {
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(&window).unwrap();
@@ -83,7 +83,7 @@ impl<'window> SimpleRayTracer<'window> {
     }
 }
 
-impl<'window> RayTracer for SimpleRayTracer<'window> {
+impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
     fn render(&self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -94,7 +94,7 @@ impl<'window> RayTracer for SimpleRayTracer<'window> {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        self.queue.write_buffer(&camera_buffer, 0, bytemuck::cast_slice(&[self.camera]));
+        self.queue.write_buffer(&camera_buffer, 0, bytemuck::cast_slice(&[*self.camera]));
 
         let objects_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Objects buffer"),
