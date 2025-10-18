@@ -2,15 +2,16 @@ use bytemuck::{Pod, Zeroable};
 
 use crate::common::in_range;
 use crate::hit::{Hit, Hittable};
-use crate::vec3;
+use crate::material::Material;
 use crate::ray::Ray;
+use crate::vec3;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Sphere {
     center: vec3::Point3,
     radius: f32,
-    material: u32,
+    material: Material,
 }
 
 impl Sphere {
