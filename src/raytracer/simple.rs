@@ -1,4 +1,5 @@
 use bytemuck;
+use bytemuck::{Pod, Zeroable};
 use wgpu;
 use winit::window::Window;
 
@@ -6,9 +7,15 @@ use crate::camera::Camera;
 use crate::raytracer::RayTracer;
 use crate::sphere::Sphere;
 
-pub struct SimpleRayTracer<'window, 'camera> {
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct SimpleRayTracerConfig {
     image_width: u32,
     image_height: u32,
+}
+
+pub struct SimpleRayTracer<'window, 'camera> {
+    config: SimpleRayTracerConfig,
     objects: Vec<Sphere>,
     camera: &'camera Camera,
 
@@ -70,8 +77,10 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
         });
 
         SimpleRayTracer {
-            image_width,
-            image_height,
+            config: SimpleRayTracerConfig {
+                image_width,
+                image_height,
+            },
             objects,
             camera,
             surface,
@@ -104,6 +113,14 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
         });
         self.queue.write_buffer(&objects_buffer, 1, bytemuck::cast_slice(self.objects.as_slice()));
 
+        let parameters_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Parameters buffer"),
+            size: std::mem::size_of::<SimpleRayTracerConfig>() as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        self.queue.write_buffer(&parameters_buffer, 2, bytemuck::cast_slice(&[self.config]));
+
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.bind_group_layout,
             entries: &[
@@ -117,6 +134,10 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
+                    resource: parameters_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
                     resource: wgpu::BindingResource::TextureView(&view),
                 },
             ],
@@ -136,8 +157,8 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &bind_group, &[]);
             pass.dispatch_workgroups(
-                (self.image_width + 7) / 8,
-                (self.image_height + 7) / 8,
+                (self.config.image_width + 7) / 8,
+                (self.config.image_height + 7) / 8,
                 1,
             );
         }
