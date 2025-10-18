@@ -19,12 +19,12 @@ impl Camera {
         look_from: Point3,
         look_at: Point3,
         up: Vec3,
-        fov_deg: f64,
-        aspect_ratio: f64,
+        fov_deg: f32,
+        aspect_ratio: f32,
     ) -> Self {
         let theta = common::degrees_to_radians(fov_deg);
 
-        let viewport_height = 2.0 * f64::tan(theta / 2.0);
+        let viewport_height = 2.0 * f32::tan(theta / 2.0);
         let viewport_width = viewport_height * aspect_ratio;
 
         let w = (look_from - look_at).unit();
@@ -44,7 +44,7 @@ impl Camera {
         }
     }
 
-    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
+    pub fn get_ray(&self, u: f32, v: f32) -> Ray {
         Ray::new(
             self.origin,
             self.bottom_left + u * self.horizontal + v * self.vertical - self.origin
