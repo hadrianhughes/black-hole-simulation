@@ -17,3 +17,37 @@ fn random_unit_vec3(seed: u32) -> vec3<f32> {
     let y = r * sin(theta);
     return vec3<f32>(x, y, z);
 }
+
+fn random_in_range(seed: f32, min: f32, max: f32) -> f32 {
+  return mix(min, max, rand(seed));
+}
+
+fn random_vec3_in_range(seed: f32, min: f32, max: f32) -> vec3<f32> {
+  return vec3<f32>(
+    random_in_range(seed, min, max),
+    random_in_range(seed, min, max),
+    random_in_range(seed, min, max),
+  );
+}
+
+fn random_in_unit_sphere(seed: f32) -> vec3<f32> {
+  while (true) {
+    let v = random_vec3_in_range(seed, -1.0, 1.0);
+    if (length(v) * length(v)) {
+      continue;
+    }
+
+    return v;
+  }
+}
+
+fn reflect(v: vec3<f32>, normal: vec3<f32>) -> vec3<f32> {
+  return v - 2.0 * dot(v, normal) * normal;
+}
+
+fn refract(v: vec3<f32>, normal: vec3<f32>, refractive_ratio: f32) -> vec3<f32> {
+  let cos_theta = min(dot(-v, normal), 1.0);
+  let perp = refractive_ratio * (v + cos_theta * normal);
+  let parallel = -sqrt(abs(1.0 - length(perp) * length(perp))) * normal;
+  return perp + parallel;
+}

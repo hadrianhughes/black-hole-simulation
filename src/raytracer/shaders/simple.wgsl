@@ -29,7 +29,17 @@ fn ray_color(ray: Ray, depth: i32) -> vec3<f32> {
   }
 
   let hit = hit_scan(objects, ray, 0.001, 1.0 / 0.0);
-  if (hit.hit) {
+  if (!hit.hit) {
+    let unit_direction = normalize(ray.direction);
+    let t = 0.5 * (unit_direction.y + 1.0);
+    return (1.0 - t) * vec3<f32>(1.0, 1.0, 1.0) + t * vec3<f32>(0.5, 0.7, 1.0);
+  }
+
+  let scattered = scatter(hit.material, ray, hit);
+  if (scattered.scattered) {
+    return scattered.attenuation * ray_color(scattered.ray, depth - 1);
+  } else {
+    return vec3<f32>(0.0, 0.0, 0.0);
   }
 }
 

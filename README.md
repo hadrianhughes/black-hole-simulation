@@ -5,6 +5,9 @@ Ray tracer code based on the guide: [The Ray Tracing Road to Rust](https://the-r
 ## TODO
 
 - [ ] Set up wgpu to perform ray calculations on the GPU
-    * [ ] Change Material type in Rust code to not use dynamic dispatch
+    * [x] Change Material type in Rust code to not use dynamic dispatch
+    * [ ] Figure out where to get seed values for rand functions
+    * [ ] Rework ray_color to remove recursion
+    * [ ] Implement emission
 - [ ] Research differential equations and relativity
 - [ ] Change rays to geodesics and introduce black hole/massive objects
