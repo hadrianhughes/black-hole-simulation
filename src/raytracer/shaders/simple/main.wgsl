@@ -37,12 +37,15 @@ fn ray_color(ray: Ray, max_depth: i32) -> vec3<f32> {
       break;
     }
 
+    let emission = emit(hit.material);
+
     r = scatter(hit.material, r, hit);
     if (!r.scattered) {
+      pixel_color += emission;
       break;
     }
 
-    pixel_color += r.attenuation;
+    pixel_color += emission + r.attenuation;
   }
 
   return pixel_color;

@@ -71,8 +71,19 @@ fn scatter(material: Material, ray: Ray, hit: Hit) -> ScatterResult {
       return ScatterResult(true, Ray(hit.position, direction), vec3<f32>(1.0, 1.0, 1.0));
     }
     // Diffuse light
-    case 3: {
+    default: {
       return ScatterResult(false);
+    }
+  }
+}
+
+fn emit(material: Material) -> vec3<f32> {
+  switch (material.mat_type) {
+    case 3: {
+      return material.color * material.emission_intensity;
+    }
+    default: {
+      return vec3<f32>(0.0, 0.0, 0.0);
     }
   }
 }
