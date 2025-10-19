@@ -50,5 +50,18 @@ fn ray_color(ray: Ray, max_depth: i32) -> vec3<f32> {
 
 @compute @workgroup_size(8, 8)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+  // Prevent out-of-bounds access
+  if (global_id.x >= config.image_width || global_id.y >= config.image_height) {
+      return;
+  }
+
+  let ray = get_ray(camera, global_id.x, global_id.y);
+  let pixel_color = ray_color(ray, config.max_depth);
+
   let index = global_id.y * config.image_width + global_id.x;
+  let base_index: u32 = pixel_index * 3u;
+
+  output[base_index + 0u] = pixel_index.x;
+  output[base_index + 1u] = pixel_index.y;
+  output[base_index + 2u] = pixel_index.z;
 }
