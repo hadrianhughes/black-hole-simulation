@@ -12,11 +12,11 @@ struct ScatterResult {
   attenuation: vec3<f32>,
 }
 
-fn scatter(material: Material, ray: Ray, hit: Hit) -> ScatterResult {
+fn scatter(material: Material, ray: Ray, hit: Hit, mut rng: ptr<function, RNG>) -> ScatterResult {
   switch (material.mat_type) {
     // Lambertian
     case 0: {
-      var scatter_direction = hit.normal + random_unit_vec3(config.rand_seed);
+      var scatter_direction = hit.normal + random_unit_vec3(&rng);
 
       let EPS: f32 = 1.0e-18;
       let near_zero = abs(scatter_direction.x) < EPS && abs(scatter_direction.y) < EPS && abs(scatter_direction.z) < EPS;
@@ -30,7 +30,7 @@ fn scatter(material: Material, ray: Ray, hit: Hit) -> ScatterResult {
     // Metal
     case 1: {
       let reflected = reflect(normalize(ray.direction), hit.normal);
-      let scattered_ray = Ray(hit.position, reflected + material.fuzz * random_in_unit_sphere(config.rand_seed));
+      let scattered_ray = Ray(hit.position, reflected + material.fuzz * random_in_unit_sphere(&rng));
 
       let did_scatter = dot(scattered_ray.direction, hit.normal) > 0.0;
       if (did_scatter) {

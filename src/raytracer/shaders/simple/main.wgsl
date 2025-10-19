@@ -23,7 +23,7 @@ var <storage, read> config: array<f32>;
 @group(0) @binding(3)
 var <storage, read> output: array<f32>;
 
-fn ray_color(ray: Ray, max_depth: i32) -> vec3<f32> {
+fn ray_color(ray: Ray, max_depth: i32, mut rng: ptr<function, RNG>) -> vec3<f32> {
   var r: Ray = ray;
   var pixel_color = vec3<f32>(0.0, 0.0, 0.0);
   var depth = max_depth;
@@ -39,7 +39,7 @@ fn ray_color(ray: Ray, max_depth: i32) -> vec3<f32> {
 
     let emission = emit(hit.material);
 
-    r = scatter(hit.material, r, hit);
+    r = scatter(hit.material, r, hit, &rng);
     if (!r.scattered) {
       pixel_color += emission;
       break;
@@ -58,8 +58,10 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
       return;
   }
 
+  var rng = RNG(seed: hash_coords(global_id.x, global_id.y, uniforms.frame));
+
   let ray = get_ray(camera, global_id.x, global_id.y);
-  let pixel_color = ray_color(ray, config.max_depth);
+  let pixel_color = ray_color(ray, config.max_depth, &rng);
 
   let index = global_id.y * config.image_width + global_id.x;
   let base_index: u32 = pixel_index * 3u;
