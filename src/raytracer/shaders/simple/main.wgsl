@@ -1,6 +1,7 @@
 struct Config {
   image_width: u32,
   image_height: u32,
+  max_depth: u32,
 }
 
 struct Hit {

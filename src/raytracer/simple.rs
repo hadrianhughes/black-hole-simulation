@@ -12,6 +12,7 @@ use crate::sphere::Sphere;
 struct SimpleRayTracerConfig {
     image_width: u32,
     image_height: u32,
+    max_depth: u32,
 }
 
 pub struct SimpleRayTracer<'window, 'camera> {
@@ -80,6 +81,7 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
             config: SimpleRayTracerConfig {
                 image_width,
                 image_height,
+                max_depth: 50,
             },
             objects,
             camera,
