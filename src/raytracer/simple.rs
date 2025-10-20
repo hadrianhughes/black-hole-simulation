@@ -36,9 +36,36 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
         camera: &'camera Camera,
     ) -> Self {
         let instance = wgpu::Instance::default();
-        let surface = instance.create_surface(window).unwrap();
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default()).await.unwrap();
+
+        let surface = {
+            let s = instance.create_surface(window).unwrap();
+
+            let window_size = window.inner_size();
+
+            let formats = s.get_capabilities(&adapter).formats;
+            let surface_format = formats
+                .iter()
+                .copied()
+                .find(|&f| f.is_srgb())
+                .unwrap_or(formats[0]);
+
+            let surface_config = wgpu::SurfaceConfiguration {
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                format: surface_format,
+                width: window_size.width,
+                height: window_size.height,
+                present_mode: wgpu::PresentMode::Fifo,
+                alpha_mode: wgpu::CompositeAlphaMode::Auto,
+                view_formats: vec![],
+                desired_maximum_frame_latency: 2,
+            };
+
+            s.configure(&device, &surface_config);
+
+            s
+        };
 
         let shader_src = concat!(
             include_str!("shaders/simple/common.wgsl"),
