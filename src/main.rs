@@ -14,32 +14,11 @@ use rand::Rng;
 
 use camera::Camera;
 use color::Color;
-use hit::{Hittable, HittableList};
-use material::{Dielectric, DiffuseLight, Lambertian, Metal};
+use hit::HittableList;
+use material::{lambertian, metal, dielectric, diffuse_light};
 use ray::Ray;
 use sphere::Sphere;
 use vec3::{Point3, Vec3};
-
-fn ray_color(ray: &Ray, world: &dyn Hittable, depth: i32) -> Color {
-    if depth <= 0 {
-        return Color::new(0.0, 0.0, 0.0);
-    }
-
-    if let Some(hit) = world.hit_scan(ray, 0.001, std::f64::INFINITY) {
-        let mat = hit.material.as_ref().unwrap();
-        let emission = mat.emit(ray, &hit);
-
-        if let Some(scatter) = mat.scatter(ray, &hit) {
-            return emission + scatter.attenuation * ray_color(&scatter.ray, world, depth - 1);
-        } else {
-            return emission;
-        }
-    }
-
-    let unit_direction = ray.direction().unit();
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
-}
 
 fn main() {
     const FOV: f64 = 20.0;
@@ -49,10 +28,10 @@ fn main() {
     const SAMPLES_PER_PIXEL: i32 = 50;
     const MAX_DEPTH: i32 = 50;
 
-    let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
-    let material_glass = Dielectric::new(1.5);
-    let material_diffuse = DiffuseLight::new(Color::new(0.9, 0.9, 0.1), 1.5);
-    let material_metal = Metal::new(Color::new(0.5, 0.5, 0.5), 0.0);
+    let material_ground = lambertian(Color::new(0.8, 0.8, 0.0));
+    let material_glass = dielectric(1.5);
+    let material_diffuse = diffuse_light(Color::new(0.9, 0.9, 0.1), 1.5);
+    let material_metal = metal(Color::new(0.5, 0.5, 0.5), 0.0);
 
     let world = HittableList::new()
         .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, Rc::new(material_ground))))
