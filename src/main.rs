@@ -8,16 +8,13 @@ mod raytracer;
 mod sphere;
 mod vec3;
 
-use std::io;
-use std::rc::Rc;
-use rand::Rng;
 use winit::{event_loop::EventLoop, window::Window};
 
 use camera::Camera;
 use color::Color;
-use hit::HittableList;
 use material::{lambertian, metal, dielectric, diffuse_light};
 use ray::Ray;
+use raytracer::simple::SimpleRayTracer;
 use sphere::Sphere;
 use vec3::{Point3, Vec3};
 
@@ -38,12 +35,12 @@ fn main() {
     let material_diffuse = diffuse_light(Color::new(0.9, 0.9, 0.1), 1.5);
     let material_metal = metal(Color::new(0.5, 0.5, 0.5), 0.0);
 
-    let world = HittableList::new()
-        .add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, Rc::new(material_ground))))
-        .add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, Rc::new(material_diffuse))))
-        .add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, Rc::new(material_glass.clone()))))
-        .add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.45, Rc::new(material_glass))))
-        .add(Box::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, Rc::new(material_metal))));
+    let objects = Vec::new()
+        .push(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, material_ground))
+        .push(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, material_diffuse))
+        .push(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, material_glass.clone()))
+        .push(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.45, material_glass))
+        .push(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, material_metal));
 
     let camera = Camera::new(
         Point3::new(-2.0, 2.0, 1.0),
@@ -53,25 +50,13 @@ fn main() {
         ASPECT_RATIO,
     );
 
-    print!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
+    let ray_tracer = SimpleRayTracer::new(
+        IMAGE_WIDTH,
+        IMAGE_HEIGHT,
+        &window,
+        objects,
+        &camera,
+    );
 
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!("\rScanlines remaining: {}", j);
-
-        for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
-
-            for _ in 0..SAMPLES_PER_PIXEL {
-                let u = (i as f64 + rand::rng().random::<f64>()) / (IMAGE_WIDTH - 1) as f64;
-                let v = (j as f64 + rand::rng().random::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
-                let r = camera.get_ray(u, v);
-
-                pixel_color += ray_color(&r, &world, MAX_DEPTH);
-            }
-
-            color::write_color(&mut io::stdout(), pixel_color, SAMPLES_PER_PIXEL);
-        }
-    }
-
-    eprintln!("\nDone!");
+    ray_tracer.render();
 }
