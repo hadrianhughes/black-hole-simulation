@@ -165,40 +165,10 @@ impl Div<f32> for Vec3 {
     }
 }
 
-pub fn dot(u: Vec3, v: Vec3) -> f32 {
-    u.x() * v.x() + u.y() * v.y() + u.z() * v.z()
-}
-
 pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
     Vec3::new(
         u.y() * v.z() - u.z() * v.y(),
         u.z() * v.x() - u.x() * v.z(),
         u.x() * v.y() - u.y() * v.x(),
     )
-}
-
-pub fn reflect(v: Vec3, normal: Vec3) -> Vec3 {
-    v - 2.0 * dot(v, normal) * normal
-}
-
-pub fn refract(v: Vec3, normal: Vec3, refractive_ratio: f32) -> Vec3 {
-    let cos_theta = f32::min(dot(-v, normal), 1.0);
-    let perp = refractive_ratio * (v + cos_theta * normal);
-    let parallel = -f32::sqrt(f32::abs(1.0 - perp.length_squared())) * normal;
-    perp + parallel
-}
-
-pub fn random_in_unit_sphere() -> Vec3 {
-    loop {
-        let v = Vec3::random_in_range(-1.0, 1.0);
-        if v.length_squared() >= 1.0 {
-            continue;
-        }
-
-        return v;
-    }
-}
-
-pub fn random_unit_vector() -> Vec3 {
-    random_in_unit_sphere().unit()
 }

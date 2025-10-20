@@ -1,7 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 
 use crate::common;
-use crate::Ray;
 use crate::vec3;
 use crate::vec3::{Point3, Vec3};
 
@@ -42,12 +41,5 @@ impl Camera {
             horizontal,
             vertical
         }
-    }
-
-    pub fn get_ray(&self, u: f32, v: f32) -> Ray {
-        Ray::new(
-            self.origin,
-            self.bottom_left + u * self.horizontal + v * self.vertical - self.origin
-        )
     }
 }

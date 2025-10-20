@@ -36,7 +36,7 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
         camera: &'camera Camera,
     ) -> Self {
         let instance = wgpu::Instance::default();
-        let surface = instance.create_surface(&window).unwrap();
+        let surface = instance.create_surface(window).unwrap();
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default()).await.unwrap();
 
