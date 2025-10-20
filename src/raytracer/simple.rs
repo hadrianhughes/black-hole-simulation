@@ -42,7 +42,7 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("RayTracer shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()), // TODO: use correct shader path
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/simple/main.wgsl").into()),
         });
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
