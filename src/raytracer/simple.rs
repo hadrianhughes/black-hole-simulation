@@ -170,7 +170,7 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
         let camera_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Camera buffer"),
             size: std::mem::size_of::<Camera>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
         self.queue.write_buffer(&camera_buffer, 0, bytemuck::cast_slice(&[*self.camera]));
@@ -178,18 +178,25 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
         let objects_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Objects buffer"),
             size: (std::mem::size_of::<Sphere>() * self.objects.len()) as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        self.queue.write_buffer(&objects_buffer, 1, bytemuck::cast_slice(self.objects.as_slice()));
+        self.queue.write_buffer(&objects_buffer, 0, bytemuck::cast_slice(self.objects.as_slice()));
 
         let parameters_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Parameters buffer"),
             size: std::mem::size_of::<SimpleRayTracerConfig>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        self.queue.write_buffer(&parameters_buffer, 2, bytemuck::cast_slice(&[self.config]));
+        self.queue.write_buffer(&parameters_buffer, 0, bytemuck::cast_slice(&[self.config]));
+
+        let output_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Output buffer"),
+            size: (self.config.image_width * self.config.image_height * std::mem::size_of::<u32>() as u32) as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.bind_group_layout,
@@ -208,7 +215,7 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
-                    resource: wgpu::BindingResource::TextureView(&view),
+                    resource: output_buffer.as_entire_binding(),
                 },
             ],
             label: Some("RayTracer BindGroup"),

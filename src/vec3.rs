@@ -11,19 +11,20 @@ pub struct Vec3 {
     x: f32,
     y: f32,
     z: f32,
+    _pad: f32,
 }
 
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Vec3 { x, y, z }
+        Vec3 { x, y, z, _pad: 0.0 }
     }
 
     pub fn random_in_range(min: f32, max: f32) -> Self {
-        Vec3 {
-            x: common::random_in_range(min, max),
-            y: common::random_in_range(min, max),
-            z: common::random_in_range(min, max),
-        }
+        Vec3::new(
+            common::random_in_range(min, max),
+            common::random_in_range(min, max),
+            common::random_in_range(min, max),
+        )
     }
 
 

@@ -8,6 +8,7 @@ use crate::vec3;
 pub struct Sphere {
     center: vec3::Point3,
     radius: f32,
+    _pad0: [f32; 3],
     material: Material,
 }
 
@@ -16,6 +17,7 @@ impl Sphere {
         Sphere {
             center,
             radius,
+            _pad0: [0.0, 0.0, 0.0],
             material,
         }
     }
