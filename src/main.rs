@@ -11,6 +11,7 @@ mod vec3;
 use std::io;
 use std::rc::Rc;
 use rand::Rng;
+use winit::{event_loop::EventLoop, window::Window};
 
 use camera::Camera;
 use color::Color;
@@ -27,6 +28,10 @@ fn main() {
     const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
     const SAMPLES_PER_PIXEL: i32 = 50;
     const MAX_DEPTH: i32 = 50;
+
+    let event_loop = EventLoop::new().unwrap();
+    let window_attributes = Window::default_attributes().with_title("Black Hole Simulation");
+    let window = event_loop.create_window(window_attributes).unwrap();
 
     let material_ground = lambertian(Color::new(0.8, 0.8, 0.0));
     let material_glass = dielectric(1.5);
