@@ -12,11 +12,11 @@ struct ScatterResult {
   attenuation: vec3<f32>,
 }
 
-fn scatter(material: Material, ray: Ray, hit: Hit, mut rng: ptr<function, RNG>) -> ScatterResult {
+fn scatter(material: Material, ray: Ray, hit: Hit, rng: ptr<function, RNG>) -> ScatterResult {
   switch (material.mat_type) {
     // Lambertian
     case 0: {
-      var scatter_direction = hit.normal + random_unit_vec3(&rng);
+      var scatter_direction = hit.normal + random_unit_vec3(rng);
 
       let EPS: f32 = 1.0e-18;
       let near_zero = abs(scatter_direction.x) < EPS && abs(scatter_direction.y) < EPS && abs(scatter_direction.z) < EPS;
@@ -30,14 +30,13 @@ fn scatter(material: Material, ray: Ray, hit: Hit, mut rng: ptr<function, RNG>) 
     // Metal
     case 1: {
       let reflected = reflect(normalize(ray.direction), hit.normal);
-      let scattered_ray = Ray(hit.position, reflected + material.fuzz * random_in_unit_sphere(&rng));
+      let scattered_ray = Ray(hit.position, reflected + material.fuzz * random_in_unit_sphere(rng));
 
-      let did_scatter = dot(scattered_ray.direction, hit.normal) > 0.0;
-      if (did_scatter) {
-        return ScatterResult(true, scattered_ray, material.color);
-      } else {
-        return ScatterResult(false);
-      }
+      return ScatterResult(
+        dot(scattered_ray.direction, hit.normal) > 0.0,
+        scattered_ray,
+        material.color
+      );
     }
     // Dielectric
     case 2: {
@@ -55,11 +54,11 @@ fn scatter(material: Material, ray: Ray, hit: Hit, mut rng: ptr<function, RNG>) 
       let cannot_refract = refractive_ratio * sin_theta > 1.0;
 
       var reflectance: f32;
-      var r0 = (1.0 - material.refractive_ratio) / (1.0 + material.refractive_ratio);
+      var r0 = (1.0 - refractive_ratio) / (1.0 + refractive_ratio);
       r0 = r0 * r0;
       reflectance = r0 + (1.0 - r0) * pow(1.0 - cos_theta, 5.0);
 
-      let is_shallow_angle = reflectance > rand(config.rand_seed);
+      let is_shallow_angle = reflectance > rand(rng);
 
       var direction: vec3<f32>;
       if (cannot_refract || is_shallow_angle) {
@@ -72,7 +71,7 @@ fn scatter(material: Material, ray: Ray, hit: Hit, mut rng: ptr<function, RNG>) 
     }
     // Diffuse light
     default: {
-      return ScatterResult(false);
+      return ScatterResult(false, ray, vec3<f32>(0.0, 0.0, 0.0));
     }
   }
 }

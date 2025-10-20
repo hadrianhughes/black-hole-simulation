@@ -20,7 +20,7 @@ fn hit_sphere(object: Sphere, ray: Ray, t_min: f32, t_max: f32) -> Hit {
     return hit;
   }
 
-  var root: f64;
+  var root: f32;
   var has_root: bool;
 
   let sqrt_d = sqrt(discriminant);
@@ -59,14 +59,15 @@ fn hit_sphere(object: Sphere, ray: Ray, t_min: f32, t_max: f32) -> Hit {
   return hit;
 }
 
-fn hit_scan(objects: array<Sphere>, ray: Ray, t_min: f32, t_max: f32) -> Hit {
+fn hit_scan(ray: Ray, t_min: f32, t_max: f32) -> Hit {
   var hit: Hit;
   var closest_t = t_max;
 
-  for (var i: i32 = 0;i < arrayLength(objects);i++) {
-    let h = hit_sphere(objects[i], ray, t_min, closest_t);
+  for (var i: u32 = 0u;i < arrayLength(&objects);i = i + 1u) {
+    let sphere = objects[i];
+    let h = hit_sphere(sphere, ray, t_min, closest_t);
     if (h.hit) {
-      closest_t = h.hit;
+      closest_t = h.t;
       hit = h;
     }
   }
