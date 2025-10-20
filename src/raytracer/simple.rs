@@ -40,9 +40,18 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default()).await.unwrap();
 
+        let shader_src = concat!(
+            include_str!("shaders/simple/common.wgsl"),
+            include_str!("shaders/simple/material.wgsl"),
+            include_str!("shaders/simple/ray.wgsl"),
+            include_str!("shaders/simple/sphere.wgsl"),
+            include_str!("shaders/simple/camera.wgsl"),
+            include_str!("shaders/simple/main.wgsl"),
+        );
+
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("RayTracer shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/simple/main.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_src.into()),
         });
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
