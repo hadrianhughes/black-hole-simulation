@@ -23,7 +23,7 @@ var <storage, read> objects: array<Sphere>;
 var <storage, read> config: Config;
 
 @group(0) @binding(3)
-var <storage, read_write> output: array<f32>;
+var output: texture_storage_2d<rgba8unorm, write>;
 
 fn ray_color(ray: Ray, max_depth: u32, rng: ptr<function, RNG>) -> vec3<f32> {
   var r: Ray = ray;
@@ -67,10 +67,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
   let ray = get_ray(camera, global_id.x, global_id.y);
   let pixel_color = ray_color(ray, config.max_depth, &rng);
 
-  let pixel_index = global_id.y * config.image_width + global_id.x;
-  let base_index: u32 = pixel_index * 3u;
-
-  output[base_index + 0u] = pixel_color.x;
-  output[base_index + 1u] = pixel_color.y;
-  output[base_index + 2u] = pixel_color.z;
+  let coords = vec2<i32>(global_id.xy);
+  textureStore(output, coords, vec4<f32>(pixel_color, 1.0));
 }

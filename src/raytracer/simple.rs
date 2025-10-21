@@ -1,7 +1,7 @@
 use bytemuck;
 use bytemuck::{Pod, Zeroable};
+use image::{ImageBuffer, Rgba};
 use wgpu;
-use winit::window::Window;
 
 use crate::camera::Camera;
 use crate::raytracer::RayTracer;
@@ -15,57 +15,27 @@ struct SimpleRayTracerConfig {
     max_depth: u32,
 }
 
-pub struct SimpleRayTracer<'window, 'camera> {
+pub struct SimpleRayTracer<'camera> {
     config: SimpleRayTracerConfig,
     objects: Vec<Sphere>,
     camera: &'camera Camera,
 
-    surface: wgpu::Surface<'window>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     pipeline: wgpu::ComputePipeline,
     bind_group_layout: wgpu::BindGroupLayout,
 }
 
-impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
+impl<'camera> SimpleRayTracer<'camera> {
     pub async fn new(
         image_width: u32,
         image_height: u32,
-        window: &'window Window,
         objects: Vec<Sphere>,
         camera: &'camera Camera,
     ) -> Self {
         let instance = wgpu::Instance::default();
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default()).await.unwrap();
-
-        let surface = {
-            let s = instance.create_surface(window).unwrap();
-
-            let window_size = window.inner_size();
-
-            let formats = s.get_capabilities(&adapter).formats;
-            let surface_format = formats
-                .iter()
-                .copied()
-                .find(|&f| f.is_srgb())
-                .unwrap_or(formats[0]);
-
-            let surface_config = wgpu::SurfaceConfiguration {
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                format: surface_format,
-                width: window_size.width,
-                height: window_size.height,
-                present_mode: wgpu::PresentMode::Fifo,
-                alpha_mode: wgpu::CompositeAlphaMode::Auto,
-                view_formats: vec![],
-                desired_maximum_frame_latency: 2,
-            };
-
-            s.configure(&device, &surface_config);
-
-            s
-        };
 
         let shader_src = concat!(
             include_str!("shaders/simple/common.wgsl"),
@@ -116,10 +86,10 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
                 wgpu::BindGroupLayoutEntry {
                     binding: 3,
                     visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: false },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    ty: wgpu::BindingType::StorageTexture {
+                        access: wgpu::StorageTextureAccess::WriteOnly,
+                        format: wgpu::TextureFormat::Rgba8Unorm,
+                        view_dimension: wgpu::TextureViewDimension::D2,
                     },
                     count: None,
                 },
@@ -153,7 +123,6 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
             },
             objects,
             camera,
-            surface,
             device,
             queue,
             pipeline,
@@ -162,11 +131,8 @@ impl<'window, 'camera> SimpleRayTracer<'window, 'camera> {
     }
 }
 
-impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
-    fn render(&self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture()?;
-        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-
+impl<'camera> RayTracer for SimpleRayTracer<'camera> {
+    fn render(&self) -> Result<ImageBuffer<Rgba<u8>, Vec<u8>>, wgpu::SurfaceError> {
         let camera_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Camera buffer"),
             size: std::mem::size_of::<Camera>() as u64,
@@ -191,12 +157,21 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
         });
         self.queue.write_buffer(&parameters_buffer, 0, bytemuck::cast_slice(&[self.config]));
 
-        let output_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Output buffer"),
-            size: (self.config.image_width * self.config.image_height * std::mem::size_of::<u32>() as u32) as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
+        let output_texture = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Output texture"),
+            size: wgpu::Extent3d {
+                width: self.config.image_width,
+                height: self.config.image_height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
         });
+        let output_view = output_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.bind_group_layout,
@@ -215,7 +190,7 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
-                    resource: output_buffer.as_entire_binding(),
+                    resource: wgpu::BindingResource::TextureView(&output_view),
                 },
             ],
             label: Some("RayTracer BindGroup"),
@@ -240,8 +215,66 @@ impl<'window, 'camera> RayTracer for SimpleRayTracer<'window, 'camera> {
             );
         }
 
+        let bytes_per_pixel = 4;
+        let bytes_per_row = bytes_per_pixel * self.config.image_width;
+        let a = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
+        let padded_bytes_per_row = ((bytes_per_row + a - 1) / a) * a;
+
+        let output_buffer_size = (padded_bytes_per_row * self.config.image_height) as wgpu::BufferAddress;
+        let output_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Output buffer"),
+            size: output_buffer_size,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+
+        encoder.copy_texture_to_buffer(
+            wgpu::TexelCopyTextureInfo {
+                texture: &output_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::TexelCopyBufferInfo {
+                buffer: &output_buffer,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(padded_bytes_per_row),
+                    rows_per_image: Some(self.config.image_height),
+                },
+            },
+            wgpu::Extent3d {
+                width: self.config.image_width,
+                height: self.config.image_height,
+                depth_or_array_layers: 1,
+            },
+        );
+
         self.queue.submit(Some(encoder.finish()));
 
-        Ok(())
+        let buffer_slice = output_buffer.slice(..);
+        buffer_slice.map_async(wgpu::MapMode::Read, |_| ());
+        self.device.poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: Some(std::time::Duration::MAX),
+        }).expect("Failed polling device");
+
+        let data = buffer_slice.get_mapped_range();
+        let mut pixels = Vec::with_capacity((self.config.image_width * self.config.image_height * 4) as usize);
+
+        for chunk in data.chunks(padded_bytes_per_row as usize) {
+            pixels.extend_from_slice(&chunk[..bytes_per_row as usize]);
+        }
+
+        let img = image::ImageBuffer::<image::Rgba<u8>, _>::from_raw(
+            self.config.image_width,
+            self.config.image_height,
+            pixels,
+        ).expect("Failed to create image buffer");
+
+        drop(data);
+        output_buffer.unmap();
+
+        Ok(img)
     }
 }

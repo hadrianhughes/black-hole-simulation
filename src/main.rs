@@ -6,7 +6,6 @@ mod sphere;
 mod vec3;
 
 use futures::executor::block_on;
-use winit::{event_loop::EventLoop, window::Window};
 
 use camera::Camera;
 use material::{lambertian, metal, dielectric, diffuse_light};
@@ -20,10 +19,6 @@ fn main() {
     const ASPECT_RATIO: f32 = 16.0 / 9.0;
     const IMAGE_WIDTH: u32 = 400;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as u32;
-
-    let event_loop = EventLoop::new().unwrap();
-    let window_attributes = Window::default_attributes().with_title("Black Hole Simulation");
-    let window = event_loop.create_window(window_attributes).unwrap();
 
     let material_ground = lambertian(Vec3::new(0.8, 0.8, 0.0));
     let material_glass = dielectric(1.5);
@@ -48,12 +43,16 @@ fn main() {
     let ray_tracer = block_on(SimpleRayTracer::new(
         IMAGE_WIDTH,
         IMAGE_HEIGHT,
-        &window,
         objects,
         &camera,
     ));
 
-    if let Err(err) = ray_tracer.render() {
-        eprintln!("Error while rendering: {err}");
+    match ray_tracer.render() {
+        Err(err) => {
+            eprintln!("Error while rendering: {err}");
+        },
+        Ok(img) => {
+            img.save("output.png").expect("Failed to save image");
+        },
     }
 }
