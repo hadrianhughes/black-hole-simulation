@@ -2,15 +2,7 @@ struct Config {
   image_width: u32,
   image_height: u32,
   max_depth: u32,
-}
-
-struct Hit {
-  hit: bool,
-  t: f32,
-  position: vec3<f32>,
-  normal: vec3<f32>,
-  front_face: bool,
-  material: Material,
+  object_count: u32,
 }
 
 @group(0) @binding(0)
@@ -31,7 +23,7 @@ fn ray_color(ray: Ray, max_depth: u32, rng: ptr<function, RNG>) -> vec3<f32> {
   var depth = max_depth;
 
   while (depth > 0) {
-    let hit = hit_scan(ray, 0.001, 0x1.fffffep+127);
+    let hit = hit_scan(ray, 0.001, 3.4028235e38);
     if (!hit.hit) {
       let unit_direction = normalize(ray.direction);
       let t = 0.5 * (unit_direction.y + 1.0);

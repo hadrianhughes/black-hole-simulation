@@ -13,6 +13,7 @@ struct SimpleRayTracerConfig {
     image_width: u32,
     image_height: u32,
     max_depth: u32,
+    object_count: u32,
 }
 
 pub struct SimpleRayTracer<'camera> {
@@ -120,6 +121,7 @@ impl<'camera> SimpleRayTracer<'camera> {
                 image_width,
                 image_height,
                 max_depth: 50,
+                object_count: objects.len() as u32,
             },
             objects,
             camera,
